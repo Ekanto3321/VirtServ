@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Console · {{ domain.name }}</title>
+<style>
+:root{color-scheme:dark;--bg:#0f1115;--panel:#171a21;--panel2:#1f2430;--border:#2b3242;--text:#edf2f7;--muted:#9aa4b2;--accent:#3b82f6;--radius:14px}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:linear-gradient(180deg,#0b0e13 0%,#11161d 100%);color:var(--text);min-height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 40px}
+.topnav{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.brand{font-size:28px;font-weight:800}
+.navlinks{display:flex;gap:10px;flex-wrap:wrap}
+.link,.btn{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);color:var(--text);text-decoration:none;font-size:14px;font-weight:600;cursor:pointer}
+.link.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.hero h1{margin:0 0 8px;font-size:clamp(28px,4vw,42px)}
+.hero p,.muted{color:var(--muted)}
+.card{background:rgba(23,26,33,.96);border:1px solid var(--border);border-radius:var(--radius)}
+.panel-body{padding:18px}
+.notice{margin:0 0 18px;padding:14px 16px;border-radius:12px;background:rgba(59,130,246,.10);border:1px solid rgba(59,130,246,.28);color:#dbeafe}
+.error{margin:0 0 18px;padding:14px 16px;border-radius:12px;background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.28);color:#fecaca}
+.shell{width:100%;height:min(82vh,960px);min-height:520px;background:#000;border-radius:14px;overflow:hidden;border:1px solid var(--border);resize:both;display:flex;flex-direction:column}
+.shell-handle{flex:0 0 auto;padding:10px 12px;background:var(--panel2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:var(--muted);cursor:grab;user-select:none}
+.shell-frame{flex:1 1 auto;min-height:0;width:100%;border:0;background:black}
+.shell-controls{display:flex;gap:8px;flex-wrap:wrap}
+.smallbtn{min-height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:12px;cursor:pointer}
+@media (max-width: 640px){.shell{resize:none;height:68vh;min-height:420px}.panel-body{padding:14px}.wrap{padding:18px 14px 28px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topnav">
+    <div class="brand">Console</div>
+    <div class="navlinks">
+      <a class="link" href="/">Dashboard</a>
+      <a class="link" href="/networks">Subnets</a>
+    </div>
+  </div>
+
+  <section class="hero">
+    <h1>{{ domain.name }}</h1>
+    <p>State: {{ domain.state }}</p>
+  </section>
+
+  {% if error %}
+    <div class="error">{{ error }}</div>
+  {% elif proxy_port %}
+    <div class="notice">Console proxy is on port {{ proxy_port }}. You can resize the console window by dragging its bottom-right corner.</div>
+    <div class="shell" id="shellBox">
+      <div class="shell-handle" id="shellHandle">
+        <span>VM Console</span>
+        <div class="shell-controls">
+          <button class="smallbtn" type="button" id="fitBtn">Fit to width</button>
+          <button class="smallbtn" type="button" id="tallBtn">Tall view</button>
+        </div>
+      </div>
+      <iframe
+        id="vncFrame"
+        class="shell-frame"
+        src="http://{{ request.url.hostname }}:{{ proxy_port }}/vnc.html?autoconnect=1&resize=scale"
+        allow="fullscreen"
+      ></iframe>
+    </div>
+  {% else %}
+    <div class="card"><div class="panel-body">Console is not ready.</div></div>
+  {% endif %}
+</div>
+<script>
+(function(){
+  const shell = document.getElementById('shellBox');
+  const frame = document.getElementById('vncFrame');
+  const fitBtn = document.getElementById('fitBtn');
+  const tallBtn = document.getElementById('tallBtn');
+  const handle = document.getElementById('shellHandle');
+  if (!shell || !frame) return;
+  const resizeFrame = () => {
+    try { frame.contentWindow?.postMessage({ type: 'resize' }, '*'); } catch (e) {}
+  };
+  const ro = new ResizeObserver(() => resizeFrame());
+  ro.observe(shell);
+  window.addEventListener('resize', resizeFrame);
+  fitBtn?.addEventListener('click', () => {
+    shell.style.height = 'min(82vh, 960px)';
+    shell.style.width = '100%';
+    resizeFrame();
+  });
+  tallBtn?.addEventListener('click', () => {
+    shell.style.height = '90vh';
+    shell.style.width = '100%';
+    resizeFrame();
+  });
+  handle?.addEventListener('mousedown', () => handle.style.cursor = 'grabbing');
+  handle?.addEventListener('mouseup', () => handle.style.cursor = 'grab');
+})();
+</script>
+</body>
+</html>

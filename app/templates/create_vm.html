@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create VM</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0f1115; --panel:#171a21; --panel2:#1f2430; --border:#2b3242; --text:#edf2f7; --muted:#9aa4b2; --accent:#3b82f6; --radius:14px; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:Inter,system-ui,sans-serif; background:linear-gradient(180deg,#0b0e13 0%,#11161d 100%); color:var(--text); min-height:100vh; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 28px 20px 40px; }
+    .topnav { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:24px; }
+    .brand { font-size:28px; font-weight:800; }
+    .navlinks { display:flex; gap:10px; flex-wrap:wrap; }
+    .link { display:inline-flex; align-items:center; justify-content:center; min-height:38px; padding:0 14px; border-radius:10px; border:1px solid var(--border); background:var(--panel2); color:var(--text); text-decoration:none; font-size:14px; font-weight:600; }
+    .card { background:rgba(23,26,33,.96); border:1px solid var(--border); border-radius:var(--radius); padding:22px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+    .field { display:flex; flex-direction:column; gap:8px; }
+    .label { font-size:14px; color:var(--muted); }
+    input, select { width:100%; min-height:44px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:#0f1420; color:var(--text); }
+    .btn { margin-top:18px; min-height:44px; padding:0 16px; border-radius:10px; border:1px solid var(--accent); background:var(--accent); color:#fff; font-weight:700; cursor:pointer; }
+    .message { margin-bottom:16px; padding:12px 14px; border-radius:10px; background:rgba(59,130,246,.12); border:1px solid rgba(59,130,246,.25); }
+    h1 { margin:0 0 10px; font-size:clamp(30px,4vw,44px); }
+    p { color:var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topnav">
+      <div class="brand">Create VM</div>
+      <div class="navlinks">
+        <a class="link" href="/">Dashboard</a>
+        <a class="link" href="/networks">Subnets</a>
+      </div>
+    </div>
+
+    <h1>New virtual machine</h1>
+    <p>Pick the ISO, choose Linux or Windows, and launch the install.</p>
+
+    {% if message %}
+      <div class="message">{{ message }}</div>
+    {% endif %}
+
+    <form class="card" method="post" action="/create-vm">
+      <div class="grid">
+        <div class="field">
+          <label class="label" for="name">VM name</label>
+          <input id="name" name="name" type="text" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="guest_type">Guest OS</label>
+          <select id="guest_type" name="guest_type" required>
+            <option value="linux" selected>Linux</option>
+            <option value="windows">Windows</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="label" for="network">Network</label>
+          <select id="network" name="network">
+            {% for net in networks %}
+              <option value="{{ net.name }}">{{ net.name }}{% if net.cidr %} ({{ net.cidr }}){% endif %}</option>
+            {% endfor %}
+            {% if not networks %}
+              <option value="default" selected>default</option>
+            {% endif %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="label" for="memory">Memory (MB)</label>
+          <input id="memory" name="memory" type="number" min="1024" value="4096" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="vcpus">vCPUs</label>
+          <input id="vcpus" name="vcpus" type="number" min="1" value="2" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="disk">Disk (GB)</label>
+          <input id="disk" name="disk" type="number" min="10" value="40" required />
+        </div>
+
+        <div class="field" style="grid-column:1 / -1;">
+          <label class="label" for="iso_path">Installation ISO</label>
+          <select id="iso_path" name="iso_path" required>
+            <option value="" selected disabled>Select an ISO</option>
+            {% for iso in iso_files %}
+              <option value="{{ iso.path }}">{{ iso.name }} — {{ iso.path }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <button class="btn" type="submit">Create VM</button>
+    </form>
+  </div>
+</body>
+</html>
